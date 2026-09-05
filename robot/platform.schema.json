@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recovernav.org/schema/physical-platform-v1.json",
+  "title": "RecoverNav Physical Platform Freeze",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "platform_id",
+    "manufacturer",
+    "model",
+    "drive_type",
+    "footprint",
+    "compute",
+    "os",
+    "ros2_distribution",
+    "nav2_version",
+    "lidar",
+    "wheel_odometry_source",
+    "localization_method",
+    "map_source",
+    "emergency_stop",
+    "verified_at_utc",
+    "recovernav_commit"
+  ],
+  "properties": {
+    "platform_id": {"type": "string", "minLength": 1},
+    "manufacturer": {"type": "string", "minLength": 1},
+    "model": {"type": "string", "minLength": 1},
+    "drive_type": {"type": "string", "minLength": 1},
+    "wheel_geometry": {"type": ["string", "null"]},
+    "footprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "polygon_xy_m"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1},
+        "polygon_xy_m": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "array",
+            "prefixItems": [{"type": "number"}, {"type": "number"}],
+            "items": false
+          }
+        }
+      }
+    },
+    "compute": {"type": "string", "minLength": 1},
+    "os": {"type": "string", "minLength": 1},
+    "ros2_distribution": {"type": "string", "minLength": 1},
+    "nav2_version": {"type": "string", "minLength": 1},
+    "lidar": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manufacturer", "model", "mounting_pose_source"],
+      "properties": {
+        "manufacturer": {"type": "string", "minLength": 1},
+        "model": {"type": "string", "minLength": 1},
+        "mounting_pose_source": {"type": "string", "minLength": 1},
+        "configured_scan_rate_hz": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "configured_range_m": {"type": ["number", "null"], "exclusiveMinimum": 0}
+      }
+    },
+    "imu": {"type": ["string", "null"]},
+    "wheel_odometry_source": {"type": "string", "minLength": 1},
+    "localization_method": {"type": "string", "minLength": 1},
+    "map_source": {"type": "string", "minLength": 1},
+    "emergency_stop": {"type": "string", "minLength": 1},
+    "battery_constraints": {"type": ["string", "null"]},
+    "verified_at_utc": {"type": "string", "format": "date-time"},
+    "recovernav_commit": {"type": "string", "pattern": "^[0-9a-fA-F]{7,40}$"},
+    "notes": {"type": ["string", "null"]}
+  }
+}
