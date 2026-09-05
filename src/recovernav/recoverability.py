@@ -7,8 +7,8 @@ must only consume robot-observable graph information available at decision time.
 
 from __future__ import annotations
 
+from collections.abc import Hashable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Hashable, Iterable, Mapping, Sequence
 
 import networkx as nx
 
@@ -101,7 +101,6 @@ def local_escape_capacity(
         capacity = float(data.get("capacity", 0.0))
         if capacity <= 0:
             continue
-        # An undirected traversability edge permits motion in both directions.
         flow_graph.add_edge(u, v, capacity=capacity)
         flow_graph.add_edge(v, u, capacity=capacity)
 
