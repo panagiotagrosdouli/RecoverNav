@@ -4,127 +4,187 @@
 
 ## Purpose
 
-This document tests the RecoverNav idea against the closest known scientific concepts rather than searching for supportive citations. The central question is whether RecoverNav can make a distinct, falsifiable contribution beyond established collision inevitability, viability, contingency planning, and reachability methods.
+This document tests RecoverNav against the closest scientific concepts rather than collecting supportive citations. The goal is to determine what claim is still defensible after accounting for established collision-inevitability, viability, safe replanning, and contingency-planning work.
 
-## 1. Inevitable Collision States (Fraichard & Asama, 2004)
+## Candidate contribution under review
 
-An Inevitable Collision State (ICS) is a state from which collision eventually occurs regardless of the future trajectory. The framework explicitly reasons about robot and obstacle dynamics and was motivated in part by safe motion planning under sensing constraints in partially known environments.
+RecoverNav studies whether a lightweight, online, robot-observable estimate of **post-invalidation recovery capacity** can first predict and then reduce navigation failures caused by dynamic route invalidation in partially observed indoor environments.
 
-### Overlap
+The intended contribution is **not** generic contingency planning, collision avoidance, safe navigation, or replanning.
 
-The deep conceptual overlap is the rejection of purely immediate geometric feasibility. Both ICS reasoning and RecoverNav care about whether a current decision destroys useful future options before failure becomes unavoidable.
+---
 
-### Non-equivalence
+## 1. Fraichard & Asama — Inevitable Collision States
 
-RecoverNav's proposed target is not simply `collision inevitable / avoidable`. It is an executed, policy-dependent post-invalidation recovery outcome after a route-changing event. A robot can fail to recover a navigation task without being in an ICS, and an ICS framework does not by itself define the proposed empirical recovery endpoint.
+**Reference:** Thierry Fraichard and Hajime Asama, *Inevitable Collision States — A Step Towards Safer Robots?*, Advanced Robotics 18(10), 2004. DOI: 10.1163/1568553042674662. Earlier IROS version: 2003.
 
-### Consequence for RecoverNav
+**Core problem:** define states from which collision is inevitable regardless of future robot motion.
 
-RecoverNav must not claim novelty for the generic principle "avoid states with no future escape." Its contribution, if supported, must lie in the operational recovery construct, estimator, conventional navigation integration, or physical evaluation methodology.
+**Key idea:** a robot should avoid entering an Inevitable Collision State (ICS). The concept explicitly considers robot and obstacle dynamics and is motivated partly by safe motion under sensing constraints and unexpected obstacles.
 
-## 2. Contingency-MPPI (Jung, Estornell & Everett, L4DC 2025)
+**Overlap with RecoverNav:** both reject purely myopic geometric feasibility. Both ask whether a current decision destroys useful future options.
 
-Contingency-MPPI embeds contingency planning inside nominal planning. Its stated motivation is that autonomous systems must account for sudden changes and retain contingency behavior. The method uses an optimization/sampling strategy and reports both simulation and mobile-robot hardware experiments.
+**Non-equivalence:** ICS is fundamentally a collision-inevitability/safety concept. RecoverNav's target is a policy-dependent, post-route-invalidation ability to autonomously continue and complete a navigation task.
 
-### Overlap
+**Novelty threat:** very high if RecoverNav is described vaguely as "avoid states with no escape." That principle is established territory.
 
-This is direct prior art against any broad claim that RecoverNav is the first navigation method to preserve backup behavior during nominal motion. Both approaches modify nominal decision-making because future adverse changes may require an alternative behavior.
+---
 
-### Candidate distinction
+## 2. Bekris & Kavraki — Greedy but Safe Replanning under Kinodynamic Constraints
 
-RecoverNav is currently framed around a route-level, robot-information-conditioned estimate of *post-route-invalidation recovery feasibility* in a conventional indoor ROS 2/Nav2-style stack, validated first against executed recovery labels and only then used for route choice. Contingency-MPPI instead explicitly optimizes nominal and contingency control behavior.
+**Reference:** Kostas E. Bekris and Lydia E. Kavraki, *Greedy but Safe Replanning under Kinodynamic Constraints*, ICRA 2007, pp. 704–710. DOI: 10.1109/ROBOT.2007.363069.
 
-This is only a candidate distinction. It is scientifically meaningful only if the RecoverNav estimator has a well-defined target, predicts held-out physical recovery outcomes, and yields a useful decision rule without simply recreating contingency trajectory optimization under another name.
+**Core problem:** repeated replanning under partial environmental knowledge, kinodynamic constraints, and finite planning time.
 
-## 3. SCRAMPPI (Srirangam, Jung, Poola & Everett, 2026)
+**Key idea:** incrementally reuse planning-tree information while explicitly respecting dynamics and safety in a changing representation of the workspace.
 
-SCRAMPPI formalizes contingency feasibility as a reach-avoid problem. It uses Hamilton–Jacobi reachability to represent a safe-set backward reachable set online and integrates the resulting constraint with MPPI. The stated requirement is that a feasible trajectory to a designated safe set should exist from points along the nominal plan. Simulation and mobile-robot hardware experiments are reported.
+**Overlap:** sensing, planning, execution, and replanning are treated as an interleaved process under partial knowledge.
 
-### Overlap
+**Non-equivalence:** RecoverNav does not claim novelty for replanning itself. Its proposed treatment is a **pre-event route-choice preference** intended to preserve later recovery capacity before a specific route invalidation is known.
 
-This is an especially close conceptual neighbor. It directly formalizes preserving a feasible contingency to a safe set while pursuing nominal behavior.
+**Novelty threat:** moderate. Any claim of novelty based on online replanning or partial knowledge alone is invalid.
 
-### Candidate distinction
+---
 
-RecoverNav should not attempt to compete by making a weaker version of a certified reachability constraint. A defensible alternative research question is whether an inexpensive, interpretable estimator tied to *executed route-invalidation recovery outcomes* can provide useful route-selection information in ordinary indoor navigation when full reachability/contingency optimization is impractical or mismatched to the navigation architecture.
+## 3. Bouraine, Fraichard & Salhi — Braking ICS / Passive Motion Safety
 
-### Required evidence
+**Reference:** Sara Bouraine, Thierry Fraichard, and Hassen Salhi, *Provably Safe Navigation for Mobile Robots with Limited Field-of-Views in Dynamic Environments*, Autonomous Robots, 2012; related IROS 2011 Braking-ICS paper, DOI: 10.1109/IROS.2011.6094901.
 
-A claim of practical distinction requires measurements, not rhetoric: estimator runtime, planning overhead, information requirements, failure modes, and physical recovery outcomes. If a reachability/contingency baseline can be implemented fairly within the same problem setting, it should eventually be considered as a secondary strong baseline.
+**Core problem:** provably safe navigation with limited field of view in unknown dynamic environments.
 
-## 4. What these works already establish
+**Key idea:** relax ICS to Braking ICS and guarantee passive motion safety: when collision cannot be avoided, the robot is at rest.
 
-RecoverNav must treat the following broad ideas as established territory:
+**Overlap:** explicitly addresses limited sensing and future inability to remain safe.
 
-- future feasibility can matter more than instantaneous collision freedom;
-- nominal motion can be constrained by the need for a contingency/backup behavior;
-- safe/backup sets can be treated using reachability concepts;
-- contingency-aware methods have already been demonstrated on physical mobile robots.
+**Non-equivalence:** RecoverNav should not claim a formal passive-safety guarantee. Its first estimator is empirical and mission-recovery-oriented, not a proof that collision can always be prevented.
 
-Therefore none of these statements is a valid standalone novelty claim for RecoverNav.
+**Novelty threat:** high if RecoverNav uses terms such as "guaranteed recovery" or "safe state" without a theorem and matching assumptions.
 
-## 5. Narrow candidate gap
+---
 
-The candidate gap is now deliberately narrower:
+## 4. Bouguerra, Fraichard & Fezari — Viability-Based Guaranteed Safe Navigation
 
-> Can a computationally lightweight, interpretable, robot-observable estimator of post-route-invalidation recovery feasibility be validated against held-out executed recovery outcomes and then improve pre-invalidation route selection in a conventional indoor mobile-robot navigation stack under matched physical trials?
+**Reference:** Mohamed Amine Bouguerra, Thierry Fraichard, and Mohamed Fezari, *Viability-Based Guaranteed Safe Robot Navigation*, Journal of Intelligent & Robotic Systems 95, 459–471, 2019. DOI: 10.1007/s10846-018-0955-9.
 
-This candidate gap has two separable scientific questions:
+**Core problem:** guarantee navigation under multiple state/motion constraints, not only collision avoidance.
 
-### Study A — construct/estimator validity
+**Key idea:** use the viability kernel, i.e. states from which at least one future trajectory can satisfy the constraints indefinitely. A conservative approximation is computed offline and used in online navigation.
 
-Does the pre-event estimator contain information about subsequent executed recovery feasibility under a frozen event family and recovery policy?
+**Overlap:** the viability concept is mathematically close to the intuition that the robot should remain in states retaining feasible future behavior.
+
+**Non-equivalence:** RecoverNav must not present "having at least one feasible future option" as new. A possible distinct contribution is an online observable **proxy for route-level post-invalidation recovery**, validated against executed outcomes and then used for route choice.
+
+**Novelty threat:** very high if the estimator is merely a renamed viability measure.
+
+---
+
+## 5. Jung, Estornell & Everett — Contingency-MPPI
+
+**Reference:** Leonard Jung, Alexander Estornell, and Michael Everett, *Contingency Constrained Planning with MPPI within MPPI*, Proceedings of L4DC, PMLR 283:869–880, 2025.
+
+**Core problem:** ensure that contingency behavior remains available during nominal execution.
+
+**Key idea:** embed contingency optimization inside nominal MPPI. The method reports both simulation and physical mobile-robot hardware experiments.
+
+**Overlap:** direct prior art against any broad statement that RecoverNav is the first method to preserve backup behavior during nominal motion.
+
+**Candidate distinction:** RecoverNav is aimed at an **unknown future route invalidation** rather than a planner-specified contingency behavior. Its scientific object is an estimator whose predictive validity is tested separately from planner efficacy.
+
+**Novelty threat:** critical. The paper must distinguish estimator validation and unknown-event route-level recoverability from explicit contingency trajectory optimization.
+
+---
+
+## 6. Srirangam, Jung, Poola & Everett — SCRAMPPI
+
+**Reference:** Raj Harshit Srirangam, Leonard Jung, Rohith Poola, and Michael Everett, *SCRAMPPI: Efficient Contingency Planning for Mobile Robot Navigation via Hamilton-Jacobi Reachability*, arXiv:2603.26995, 2026.
+
+**Core problem:** guarantee existence of a feasible trajectory from the nominal plan to a designated safe set.
+
+**Key idea:** formulate contingency feasibility as reach-avoid and use Hamilton–Jacobi reachability to certify the backward reachable set online as the environment is revealed; integrate this with MPPI. The work includes simulation and hardware experiments.
+
+**Overlap:** extremely close conceptual neighbor. It directly formalizes preserving feasible contingency to a safe set while pursuing nominal behavior.
+
+**Candidate distinction:** RecoverNav should not compete by offering a weaker version of a certified safe-set reachability constraint. The strongest remaining angle is **prediction and decision usefulness when the specific future route invalidation and recovery destination are not known beforehand**.
+
+**Novelty threat:** critical. SCRAMPPI must be a central related-work comparison, not a peripheral citation.
+
+---
+
+# Cross-paper conclusion
+
+The following are established and therefore **not acceptable novelty claims**:
+
+- future feasibility matters beyond immediate collision freedom;
+- a robot should avoid states from which safe continuation becomes impossible;
+- navigation can preserve contingency/backup behavior;
+- reachability and viability can formalize future feasible sets;
+- robots can replan under partial knowledge;
+- contingency-aware methods have already run on physical mobile robots.
+
+## Provisional paper-worthy gap
+
+> **Can a computationally lightweight, interpretable, robot-observable structural estimator predict whether an indoor mobile robot will remain recoverable after an as-yet-unknown local route invalidation, and does using that estimator for pre-event route selection reduce physical-robot recovery failures relative to an otherwise matched conventional planner?**
+
+This produces two distinct studies.
+
+### Study A — estimator validity
+
+Does the pre-event estimator contain predictive information about subsequent executed recovery feasibility on held-out scenarios/trials?
 
 ### Study B — decision usefulness
 
-After Study A is frozen, does using that estimator for route selection reduce the prespecified recovery-infeasible failure endpoint compared with a matched baseline, at an acceptable efficiency/compute cost?
+After freezing the estimator, does using it for route selection reduce the prespecified physical-robot recovery-failure endpoint relative to a matched baseline, and at what path-length/latency cost?
 
-Study B is not scientifically interpretable if Study A fails.
+Study B must not be used to retroactively tune Study A.
 
-## 6. Novelty kill conditions
+---
 
-The proposed contribution should be revised or abandoned if deeper review finds prior work that already combines all or nearly all of the following under comparable assumptions:
+# Novelty kill conditions
 
-1. pre-event robot-observable recovery-feasibility estimation;
-2. validation of that estimate against executed physical recovery outcomes;
-3. route-level use before invalidation rather than only local emergency control;
-4. dynamic/partially observed indoor navigation;
-5. conventional navigation-stack integration;
-6. matched physical comparison using a recovery-specific endpoint;
-7. comparable computational/information assumptions.
+The contribution must be revised or abandoned if deeper review finds prior work already combining nearly all of the following under comparable assumptions:
 
-## 7. Implications for estimator design
+1. online pre-event recovery-feasibility estimation from robot-observable map/state information;
+2. validation of the estimate against executed physical recovery outcomes;
+3. route-level use before invalidation rather than only emergency control;
+4. unknown route-invalidating event at decision time;
+5. partially observed indoor mobile-robot navigation;
+6. conventional navigation-stack integration;
+7. matched physical comparison using a recovery-specific endpoint;
+8. comparable computational and information assumptions.
 
-The first RecoverNav estimator should not be a large weighted collection of intuitive features. The initial scientific object should be an interpretable *recovery margin* with explicit semantics.
+---
 
-A promising first direction is bottleneck-aware alternative-route feasibility:
+# Implications for method design
 
-- represent currently known traversable space as a footprint-aware graph;
-- identify commitment/bottleneck regions along a candidate route;
-- for each sampled route state, determine whether a feasible retreat or alternative continuation exists without depending on the candidate failure edge/region;
-- incorporate robot footprint and turning feasibility;
-- summarize the route conservatively by its weakest recovery margin.
+The first estimator must not be a large hand-tuned weighted feature list. It should have explicit semantics and few degrees of freedom.
 
-The exact formula is not frozen by this review. It must survive toy counterexamples and Study A validation before planner efficacy testing.
+The selected v1 direction is **bottleneck-aware escape capacity** over currently observed, footprint-aware traversable space. Its exact frozen mathematical definition is maintained separately in `RECOVERABILITY_ESTIMATOR_V1.md`.
 
-## 8. Baseline policy
+---
 
-For the primary causal comparison, the baseline should differ only in the recoverability treatment. A conventional shortest/costmap route objective is therefore appropriate for J0 if all perception, controller, localization, safety, replanning, and event settings are held fixed.
+# Baseline policy
 
-A stronger contingency/reachability method is valuable as a secondary scientific reference if it can be made comparable, but it must not replace the clean J0-vs-RecoverNav treatment comparison needed to isolate the estimator's effect.
+For the primary causal comparison, J0 and RecoverNav must differ only in the recoverability treatment. Perception, localization, controller, costmaps, safety layer, event trigger, replan policy, and robot hardware must be identical.
 
-## 9. Current conclusion
+A reachability/contingency method such as SCRAMPPI is scientifically valuable as a secondary strong reference if it can be implemented under genuinely comparable assumptions, but it must not obscure the clean J0-vs-RecoverNav treatment comparison.
 
-The project is scientifically plausible but novelty is not yet established. The broad recoverability/backup-options idea is demonstrably not novel. The strongest remaining path is an empirical construct-validation contribution plus a tightly controlled physical-robot route-selection study.
+---
 
-The next gate is therefore not implementation volume. It is to freeze an operational estimator candidate, adversarially test its semantics, and preregister Study A's validation criterion.
+# Current conclusion
+
+RecoverNav remains scientifically plausible, but the broad "preserve escape options" idea is not novel. The strongest paper path is an **empirical construct-validation contribution plus a controlled physical-robot route-selection study**.
+
+The next methodological gate is to validate the frozen estimator before allowing it to support any efficacy claim.
 
 ## Primary bibliographic anchors
 
-- T. Fraichard and H. Asama, “Inevitable collision states — a step towards safer robots?”, *Advanced Robotics*, 18(10):1001–1024, 2004. DOI: 10.1163/1568553042674662.
-- L. Jung, A. Estornell, and M. Everett, “Contingency Constrained Planning with MPPI within MPPI,” *Proceedings of L4DC*, PMLR 283:869–880, 2025.
-- R. H. Srirangam, L. Jung, R. Poola, and M. Everett, “SCRAMPPI: Efficient Contingency Planning for Mobile Robot Navigation via Hamilton-Jacobi Reachability,” arXiv:2603.26995, 2026.
+- T. Fraichard and H. Asama, *Inevitable collision states — a step towards safer robots?*, Advanced Robotics, 2004. DOI: 10.1163/1568553042674662.
+- K. E. Bekris and L. E. Kavraki, *Greedy but Safe Replanning under Kinodynamic Constraints*, ICRA 2007. DOI: 10.1109/ROBOT.2007.363069.
+- S. Bouraine, T. Fraichard, and H. Salhi, Braking-ICS / provably safe navigation work, IROS 2011 / Autonomous Robots 2012. DOI: 10.1109/IROS.2011.6094901.
+- M. A. Bouguerra, T. Fraichard, and M. Fezari, *Viability-Based Guaranteed Safe Robot Navigation*, JINT 2019. DOI: 10.1007/s10846-018-0955-9.
+- L. Jung, A. Estornell, and M. Everett, *Contingency Constrained Planning with MPPI within MPPI*, L4DC/PMLR 2025.
+- R. H. Srirangam, L. Jung, R. Poola, and M. Everett, *SCRAMPPI*, arXiv:2603.26995, 2026.
 
-## Review limitations
+## Review limitation
 
-This pass establishes close conceptual overlap from primary publication records/abstracts and available method descriptions. It is not yet a systematic review. Before publication-facing novelty language is frozen, full methods, assumptions, experiments, and cited predecessors of the closest works must be reviewed and recorded.
+This is a focused closest-prior-work review, not yet a systematic review. Before submission, the references and predecessor chains of Contingency-MPPI and SCRAMPPI must be expanded into a broader reproducible literature search.
