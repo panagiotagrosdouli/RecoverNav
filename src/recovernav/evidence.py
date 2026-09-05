@@ -7,9 +7,10 @@ missing data.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 _REQUIRED_FIELDS = (
     "trial_id",
