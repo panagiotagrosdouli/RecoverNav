@@ -8,8 +8,8 @@ leak into score computation.
 
 from __future__ import annotations
 
+from collections.abc import Hashable, Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
-from typing import Hashable, Iterable, Mapping, Sequence
 
 import networkx as nx
 
