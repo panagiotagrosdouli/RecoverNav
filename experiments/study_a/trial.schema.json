@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recovernav.org/schema/study-a-trial-v1.json",
+  "title": "RecoverNav Study A Trial",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "trial_id",
+    "scenario_id",
+    "software_commit",
+    "config_hash",
+    "pre_event_rho",
+    "recovery_success",
+    "event_id",
+    "event_trigger_time_s",
+    "data_split"
+  ],
+  "properties": {
+    "trial_id": {"type": "string", "minLength": 1},
+    "scenario_id": {"type": "string", "minLength": 1},
+    "event_id": {"type": "string", "minLength": 1},
+    "software_commit": {"type": "string", "minLength": 7},
+    "config_hash": {"type": "string", "minLength": 8},
+    "data_split": {"enum": ["commissioning", "validation", "held_out"]},
+    "pre_event_rho": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+    "pre_event_escape_capacity": {"type": "number", "minimum": 0.0},
+    "recovery_success": {"type": "boolean"},
+    "recovery_time_s": {"type": ["number", "null"], "minimum": 0.0},
+    "event_trigger_time_s": {"type": "number", "minimum": 0.0},
+    "human_intervention": {"type": "boolean", "default": false},
+    "collision_or_contact": {"type": "boolean", "default": false},
+    "localization_failure": {"type": "boolean", "default": false},
+    "excluded": {"type": "boolean", "default": false},
+    "exclusion_reason": {"type": ["string", "null"]},
+    "notes": {"type": ["string", "null"]}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"excluded": {"const": true}}, "required": ["excluded"]},
+      "then": {"required": ["exclusion_reason"]}
+    }
+  ]
+}
