@@ -1,0 +1,8 @@
+# Copy this file to a machine-local verified_topics.txt only after running
+# discover_physical_stack.sh on the actual robot.
+#
+# One exact live ROS 2 topic per line. Do not copy tutorial/default names unless
+# the discovery output proves that they exist on the physical stack.
+#
+# Example syntax only (intentionally no topic values are supplied):
+# /<exact-topic-from-live-discovery>
