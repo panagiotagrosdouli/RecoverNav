@@ -10,9 +10,7 @@ on:
 
 jobs:
   runtime-smoke:
-    runs-on: ubuntu-latest
-    container:
-      image: ubuntu:noble
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -25,8 +23,8 @@ jobs:
       - name: Install Nav2 and runtime tools
         shell: bash
         run: |
-          apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y \
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
             git \
             python3-yaml \
             ros-jazzy-navigation2 \
