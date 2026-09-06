@@ -1,0 +1,136 @@
+name: ROS 2 Runtime Smoke
+
+on:
+  push:
+    paths:
+      - "ros2_ws/**"
+      - "experiments/run_ros2_experiments.py"
+      - ".github/workflows/ros2-runtime-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  runtime-smoke:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:noble
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up ROS 2 Jazzy
+        uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: jazzy
+
+      - name: Install Nav2 and runtime tools
+        shell: bash
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git \
+            python3-yaml \
+            ros-jazzy-navigation2 \
+            ros-jazzy-nav2-bringup \
+            ros-jazzy-ros-gz \
+            ros-jazzy-ros-gz-sim
+
+      - name: Assemble TurtleBot3 + RecoverNav workspace
+        shell: bash
+        run: |
+          mkdir -p /tmp/recovernav_ws/src
+          cd /tmp/recovernav_ws/src
+          git clone --depth 1 -b jazzy https://github.com/ROBOTIS-GIT/DynamixelSDK.git
+          git clone --depth 1 -b jazzy https://github.com/ROBOTIS-GIT/turtlebot3_msgs.git
+          git clone --depth 1 -b jazzy https://github.com/ROBOTIS-GIT/turtlebot3.git
+          git clone --depth 1 -b jazzy https://github.com/ROBOTIS-GIT/turtlebot3_simulations.git
+          cp -a "$GITHUB_WORKSPACE/ros2_ws/src/recovernav_planner" .
+          cp -a "$GITHUB_WORKSPACE/ros2_ws/src/recovernav_bringup" .
+          cp -a "$GITHUB_WORKSPACE/ros2_ws/src/recovernav_scenarios" .
+          cp -a "$GITHUB_WORKSPACE/ros2_ws/src/recovernav_experiments" .
+          source /opt/ros/jazzy/setup.bash
+          rosdep install --from-paths . --ignore-src -r -y
+
+      - name: Build full workspace
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          cd /tmp/recovernav_ws
+          colcon build --symlink-install --event-handlers console_direct+
+          source install/setup.bash
+          colcon test --packages-select recovernav_planner --event-handlers console_direct+
+          colcon test-result --verbose
+
+      - name: Start RecoverNav headless simulation
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source /tmp/recovernav_ws/install/setup.bash
+          export TURTLEBOT3_MODEL=burger
+          ros2 launch recovernav_bringup simulation.launch.py \
+            scenario:=two_routes planner:=recovernav rviz:=false gz_gui:=false \
+            > /tmp/recovernav_sim.log 2>&1 &
+          echo $! > /tmp/recovernav_sim.pid
+          sleep 25
+          if ! kill -0 "$(cat /tmp/recovernav_sim.pid)" 2>/dev/null; then
+            cat /tmp/recovernav_sim.log
+            exit 1
+          fi
+
+      - name: Verify ROS graph
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source /tmp/recovernav_ws/install/setup.bash
+          ros2 node list | tee /tmp/nodes.txt
+          ros2 topic list | tee /tmp/topics.txt
+          ros2 action list | tee /tmp/actions.txt
+          grep -Fx /tf /tmp/topics.txt
+          grep -Fx /map /tmp/topics.txt
+          grep -Fx /scan /tmp/topics.txt
+          grep -Fx /navigate_to_pose /tmp/actions.txt
+          grep -E '/planner_server$' /tmp/nodes.txt
+          grep -E '/controller_server$' /tmp/nodes.txt
+
+      - name: Run autonomous dynamic-obstacle trial
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source /tmp/recovernav_ws/install/setup.bash
+          export TURTLEBOT3_MODEL=burger
+          ros2 run recovernav_scenarios dynamic_obstacle --ros-args \
+            -p use_sim_time:=true -p scenario:=two_routes -p trigger_seconds:=60.0 \
+            > /tmp/obstacle.log 2>&1 &
+          OBSTACLE_PID=$!
+          set +e
+          timeout 150s ros2 run recovernav_experiments trial_runner --ros-args \
+            -p use_sim_time:=true -p scenario:=two_routes -p planner:=recovernav \
+            -p seed:=0 -p timeout_seconds:=120.0 -p results_dir:=/tmp/ros2_results \
+            > /tmp/trial.log 2>&1
+          RC=$?
+          set -e
+          kill "$OBSTACLE_PID" 2>/dev/null || true
+          cat /tmp/trial.log
+          cat /tmp/obstacle.log
+          test "$RC" -eq 0
+          test -f /tmp/ros2_results/two_routes_recovernav_seed0.json
+          python3 - <<'PY'
+          import json
+          p='/tmp/ros2_results/two_routes_recovernav_seed0.json'
+          d=json.load(open(p))
+          print(json.dumps(d, indent=2))
+          assert d['number_of_global_plans'] >= 1
+          assert len(d['trajectory']) > 2
+          assert d['executed_trajectory_length'] > 0.05
+          assert d['dynamic_obstacle_requested'] is True
+          assert d['dynamic_obstacle_trigger_time'] is not None
+          PY
+
+      - name: Show simulation log on failure or completion
+        if: always()
+        shell: bash
+        run: |
+          cat /tmp/recovernav_sim.log 2>/dev/null || true
+          if test -f /tmp/recovernav_sim.pid; then
+            kill "$(cat /tmp/recovernav_sim.pid)" 2>/dev/null || true
+          fi
