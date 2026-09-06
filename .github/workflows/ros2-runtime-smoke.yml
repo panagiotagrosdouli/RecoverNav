@@ -15,22 +15,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up ROS 2 Jazzy
-        uses: ros-tooling/setup-ros@v0.7
-        with:
-          required-ros-distributions: jazzy
-
-      - name: Install Nav2 and runtime tools
+      - name: Install ROS 2 Jazzy, Nav2 and runtime tools
         shell: bash
         run: |
           sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common curl
+          sudo add-apt-repository universe -y
+          sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list >/dev/null
+          sudo apt-get update
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
             git \
+            python3-colcon-common-extensions \
+            python3-rosdep \
             python3-yaml \
+            ros-jazzy-ros-base \
             ros-jazzy-navigation2 \
             ros-jazzy-nav2-bringup \
             ros-jazzy-ros-gz \
             ros-jazzy-ros-gz-sim
+          sudo rosdep init 2>/dev/null || true
+          rosdep update
 
       - name: Assemble TurtleBot3 + RecoverNav workspace
         shell: bash
