@@ -13,20 +13,14 @@ def _capture(tmp_path: Path) -> tuple[Path, Path]:
     bag.mkdir(parents=True)
     (bag / "metadata.yaml").write_text("rosbag2_bagfile_information:\n", encoding="utf-8")
     (capture / "CAPTURE_COMPLETE").write_text("", encoding="utf-8")
-    (capture / "provenance.env").write_text(
-        "\n".join(
-            [
-                "trial_id=trial_001",
-                "scenario_id=scenario_a",
-                "platform_id=robot_real_01",
-                "timestamp_utc=2026-09-06T06:00:00Z",
-                "software_commit=8e0a7bf64f18afd70e143eb98fcbdfdc6a8b5d2f",
-                "config_sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-            ]
-        )
-        + "\n",
-        encoding="utf-8",
-    )
+    provenance = """trial_id=trial_001
+scenario_id=scenario_a
+platform_id=robot_real_01
+timestamp_utc=2026-09-06T06:00:00Z
+software_commit=8e0a7bf64f18afd70e143eb98fcbdfdc6a8b5d2f
+config_sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+"""
+    (capture / "provenance.env").write_text(provenance, encoding="utf-8")
     return root, capture
 
 
