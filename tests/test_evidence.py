@@ -20,10 +20,16 @@ def _record(raw_log_ref: str) -> dict[str, object]:
     }
 
 
-def test_valid_ros_bag_artifact_passes(tmp_path: Path) -> None:
-    bag = tmp_path / "bag"
+def _valid_bag(root: Path) -> Path:
+    bag = root / "bag"
     bag.mkdir()
     (bag / "metadata.yaml").write_text("rosbag2_bagfile_information:\n", encoding="utf-8")
+    (bag / "bag_0.mcap").write_bytes(b"physical-bag-test-fixture")
+    return bag
+
+
+def test_valid_ros_bag_artifact_passes(tmp_path: Path) -> None:
+    _valid_bag(tmp_path)
 
     assert validate_trial_evidence(_record("bag"), tmp_path) == []
 
@@ -38,10 +44,21 @@ def test_empty_ros_bag_metadata_is_rejected(tmp_path: Path) -> None:
     bag = tmp_path / "bag"
     bag.mkdir()
     (bag / "metadata.yaml").write_text("", encoding="utf-8")
+    (bag / "bag_0.mcap").write_bytes(b"physical-bag-test-fixture")
 
     errors = validate_trial_evidence(_record("bag"), tmp_path)
 
     assert "raw ROS bag directory must contain non-empty metadata.yaml" in errors
+
+
+def test_missing_ros_bag_storage_is_rejected(tmp_path: Path) -> None:
+    bag = tmp_path / "bag"
+    bag.mkdir()
+    (bag / "metadata.yaml").write_text("rosbag2_bagfile_information:\n", encoding="utf-8")
+
+    errors = validate_trial_evidence(_record("bag"), tmp_path)
+
+    assert "raw ROS bag directory must contain non-empty .db3 or .mcap storage data" in errors
 
 
 def test_raw_log_cannot_escape_artifact_root(tmp_path: Path) -> None:
@@ -51,9 +68,7 @@ def test_raw_log_cannot_escape_artifact_root(tmp_path: Path) -> None:
 
 
 def test_invalid_timestamp_and_commit_are_rejected(tmp_path: Path) -> None:
-    bag = tmp_path / "bag"
-    bag.mkdir()
-    (bag / "metadata.yaml").write_text("metadata", encoding="utf-8")
+    _valid_bag(tmp_path)
     record = _record("bag")
     record["timestamp_utc"] = "not-a-time"
     record["software_commit"] = "not-a-commit"
