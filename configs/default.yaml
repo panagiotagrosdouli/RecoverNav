@@ -1,0 +1,11 @@
+planner:
+  lambda_recovery: 2.5
+  recovery_radius: 3
+experiments:
+  scenarios:
+    - open_room
+    - corridor
+    - two_routes
+    - bottleneck
+    - dead_end
+    - multi_corridor

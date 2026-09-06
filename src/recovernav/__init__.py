@@ -1,24 +1,8 @@
-"""RecoverNav research core.
+"""RecoverNav: lightweight recoverability-aware navigation."""
 
-The package intentionally exposes only the frozen v1 estimator primitives.
-"""
+from .environment import GridEnvironment
+from .robot import NavigationState, Robot
+from .scenarios import Scenario, make_scenario
 
-from .recoverability import (
-    EdgeData,
-    EstimatorConfig,
-    RecoverabilityResult,
-    build_capacity_graph,
-    local_escape_capacity,
-    route_recoverability,
-    state_recoverability,
-)
-
-__all__ = [
-    "EdgeData",
-    "EstimatorConfig",
-    "RecoverabilityResult",
-    "build_capacity_graph",
-    "local_escape_capacity",
-    "route_recoverability",
-    "state_recoverability",
-]
+__all__ = ["GridEnvironment", "NavigationState", "Robot", "Scenario", "make_scenario"]
+__version__ = "0.2.0"

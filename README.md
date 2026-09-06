@@ -1,89 +1,91 @@
 # RecoverNav
 
-**Recoverability-aware navigation for physical mobile robots in dynamic indoor environments.**
+RecoverNav is a lightweight navigation framework for experimenting with recovery-aware path planning in dynamic 2D environments.
 
-RecoverNav is a research-first robotics project built around one falsifiable question:
+A conventional planner usually minimizes path cost. RecoverNav can additionally penalize states with poor local escape structure, so a route may trade a little distance for more recovery options when the environment changes.
 
-> **Does explicitly preserving recovery options during planning reduce post-invalidation navigation failures on a physical mobile robot compared with conventional navigation?**
+## What it does
 
-The repository is intentionally organized around the scientific method rather than around feature accumulation:
+- deterministic 2D grid environments with rooms, corridors, bottlenecks and alternative routes;
+- step-by-step robot execution;
+- standard A* baseline;
+- recoverability-aware A*;
+- dynamic obstacle insertion and route invalidation;
+- replanning from the robot's current position;
+- animated and side-by-side visual demos;
+- recoverability heatmaps;
+- paired batch experiments and CSV metrics;
+- automated tests.
 
-1. research question and hypotheses;
-2. operational definitions;
-3. minimal navigation methods;
-4. frozen experimental protocol;
-5. physical-robot trials;
-6. raw data and provenance;
-7. statistical analysis;
-8. conclusions constrained by evidence.
+The recoverability value `Q` is a structural score in `[0, 1]`, not a probability of successful recovery. The default score combines the number of reachable sides of a local window with reachable local free-space coverage. Dead ends and single-exit regions tend to receive lower values; open intersections and open areas tend to receive higher values.
 
-## Primary comparison
+## Install
 
-RecoverNav begins with one controlled comparison:
-
-- **Baseline (J0):** conventional shortest/cost-based navigation without an explicit recoverability objective.
-- **RecoverNav (JR):** navigation with an additional recoverability-aware penalty designed to preserve feasible recovery options before route invalidation.
-
-A conceptual path objective is
-
-```text
-J(P) = L(P) + lambda_R * R(P)
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
 ```
 
-where `L(P)` is nominal path cost and `R(P)` is an operationally defined recoverability/irreversibility cost. The exact definition of `R(P)` must be validated against executed recovery outcomes before it is treated as an efficacy measure.
+For development:
 
-## Primary outcome
-
-The primary endpoint is binary:
-
-```text
-post-invalidation recovery failure = 1
-successful recovery and task completion = 0
+```bash
+pip install -e '.[dev]'
+pytest
 ```
 
-Secondary outcomes include recovery time, total task time, replanning latency, path length, minimum clearance, number of replans, and human interventions.
+## Quick start
 
-## Physical-robot requirement
+Animated navigation:
 
-The central claim will be evaluated on a real mobile robot in controlled indoor scenarios with reproducible dynamic route-invalidating events. Simulation is used for development and commissioning only; it does not substitute for the physical-robot efficacy study.
+```bash
+python examples/demo_navigation.py
+```
+
+Useful keys: `SPACE` pause/resume, `N` single step, `O` insert the scenario obstacle, `P` replan, `1` baseline A*, `2` RecoverNav, `R` reset.
+
+Compare both planners on exactly the same scenario:
+
+```bash
+python examples/compare_planners.py --scenario two_routes --show-heatmap
+```
+
+Run paired experiments:
+
+```bash
+python experiments/run_experiments.py --seeds 20
+python experiments/analyze_results.py
+```
+
+The experiment runner writes `results/runs.csv`; the analysis script writes `results/summary.csv` and plots.
+
+## Planner objective
+
+Baseline A* uses unit step cost. RecoverNav adds a structural recovery penalty:
+
+```text
+step_cost(x) = 1 + lambda_recovery * (1 - Q(x))
+```
+
+`Q(x)` is computed from local free-space connectivity. It is intentionally interpretable and can be replaced by alternative structural metrics later.
+
+## Built-in scenarios
+
+`open_room`, `corridor`, `two_routes`, `bottleneck`, `dead_end`, and `multi_corridor`.
+
+Dynamic events are deterministic for a given scenario/seed. Baseline and RecoverNav always receive the same map, start, goal, event and seed in paired experiments.
 
 ## Repository structure
 
 ```text
-docs/                 scientific specification and experimental protocol
-src/recovernav/       minimal research implementation
-robot/                ROS 2 / Nav2 integration for the physical robot
-experiments/          scenario definitions and trial runners
-analysis/             preregistered statistical analysis
-configs/              frozen experiment configurations
-data/
-  raw/                immutable physical-trial data
-  processed/          derived datasets
-  manifests/          provenance and trial manifests
-tests/                software and research-contract tests
+src/recovernav/          environment, robot, execution and planners
+examples/                visual and interactive demos
+experiments/             batch runner and result analysis
+configs/                 algorithm and experiment configuration
+tests/                   navigation and research-engineering tests
+results/                 generated outputs
 ```
 
-## Scientific discipline
+## Current limitations
 
-RecoverNav follows these rules:
-
-- one primary research question;
-- one prespecified primary endpoint;
-- matched/paired baseline-vs-treatment trials where possible;
-- explicit inclusion, exclusion, failure, and intervention rules;
-- immutable raw data;
-- no efficacy claim based only on simulation;
-- no claim that the recoverability score is a calibrated probability unless calibration is demonstrated;
-- protocol changes after data collection begins must be documented and versioned.
-
-## Current status
-
-**Phase 0 — protocol and implementation specification.**
-
-No physical-robot efficacy result is claimed yet.
-
-Start with:
-
-- [`docs/RESEARCH_QUESTION.md`](docs/RESEARCH_QUESTION.md)
-- [`docs/EXPERIMENT_PROTOCOL.md`](docs/EXPERIMENT_PROTOCOL.md)
-- [`docs/ROADMAP.md`](docs/ROADMAP.md)
+RecoverNav currently uses a discrete grid robot, known maps, deterministic obstacle events and a hand-designed local structural recoverability score. It does not model realistic robot dynamics, perception uncertainty or physical-robot control, and it makes no safety or superiority claim.
