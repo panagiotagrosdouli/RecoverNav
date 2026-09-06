@@ -87,7 +87,15 @@ def test_manual_event_timing_is_rejected(tmp_path: Path) -> None:
     root, capture = _capture(tmp_path)
     measurements = _measurements() | {"event_trigger_time_s": 99.0}
 
-    with pytest.raises(ValueError, match="must come from event_evidence.json"):
+    with pytest.raises(ValueError, match="unknown measurement fields: event_trigger_time_s"):
+        build_trial_record(capture, root, measurements)
+
+
+def test_unknown_measurement_field_is_rejected(tmp_path: Path) -> None:
+    root, capture = _capture(tmp_path)
+    measurements = _measurements() | {"unregistered_metric": 1.0}
+
+    with pytest.raises(ValueError, match="unknown measurement fields: unregistered_metric"):
         build_trial_record(capture, root, measurements)
 
 
