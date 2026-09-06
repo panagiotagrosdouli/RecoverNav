@@ -1,0 +1,10 @@
+planner_server:
+  ros__parameters:
+    plugins: ["GridBased"]
+    GridBased:
+      plugin: "recovernav_planner::RecoverNavPlanner"
+      lambda_recovery: 1.75
+      recoverability_radius: 5
+      exit_sector_count: 8
+      maximum_traversable_cost: 252
+      publish_recoverability_grid: true
