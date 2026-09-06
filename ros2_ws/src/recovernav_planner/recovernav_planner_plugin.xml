@@ -1,0 +1,8 @@
+<library path="recovernav_planner">
+  <class
+    name="recovernav_planner/RecoverNavPlanner"
+    type="recovernav_planner::RecoverNavPlanner"
+    base_class_type="nav2_core::GlobalPlanner">
+    <description>Grid A* with an interpretable local recoverability penalty.</description>
+  </class>
+</library>
