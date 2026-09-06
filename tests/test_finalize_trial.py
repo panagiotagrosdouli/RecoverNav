@@ -1,9 +1,14 @@
+import hashlib
 import json
 from pathlib import Path
 
 import pytest
 
 from recovernav.finalize_trial import build_trial_record, finalize_trial_record
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _capture(tmp_path: Path) -> tuple[Path, Path]:
@@ -14,12 +19,19 @@ def _capture(tmp_path: Path) -> tuple[Path, Path]:
     (bag / "metadata.yaml").write_text("rosbag2_bagfile_information:\n", encoding="utf-8")
     (bag / "bag_0.mcap").write_bytes(b"physical-bag-test-fixture")
     (capture / "CAPTURE_COMPLETE").write_text("", encoding="utf-8")
-    provenance = """trial_id=trial_001
+
+    config_snapshot = capture / "frozen_config.snapshot"
+    topics_snapshot = capture / "verified_topics.snapshot.txt"
+    config_snapshot.write_text("frozen physical config fixture\n", encoding="utf-8")
+    topics_snapshot.write_text("/verified/topic\n", encoding="utf-8")
+
+    provenance = f"""trial_id=trial_001
 scenario_id=scenario_a
 platform_id=robot_real_01
 timestamp_utc=2026-09-06T06:00:00Z
 software_commit=8e0a7bf64f18afd70e143eb98fcbdfdc6a8b5d2f
-config_sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+config_sha256={_sha256(config_snapshot)}
+verified_topics_sha256={_sha256(topics_snapshot)}
 """
     (capture / "provenance.env").write_text(provenance, encoding="utf-8")
     event_evidence = {
@@ -86,6 +98,22 @@ def test_missing_measurement_is_rejected(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="missing measured fields"):
         build_trial_record(capture, root, measurements)
+
+
+def test_tampered_config_snapshot_is_rejected(tmp_path: Path) -> None:
+    root, capture = _capture(tmp_path)
+    (capture / "frozen_config.snapshot").write_text("tampered\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="snapshot hash mismatch"):
+        build_trial_record(capture, root, _measurements())
+
+
+def test_tampered_topics_snapshot_is_rejected(tmp_path: Path) -> None:
+    root, capture = _capture(tmp_path)
+    (capture / "verified_topics.snapshot.txt").write_text("/other/topic\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="snapshot hash mismatch"):
+        build_trial_record(capture, root, _measurements())
 
 
 def test_excluded_trial_requires_reason(tmp_path: Path) -> None:
