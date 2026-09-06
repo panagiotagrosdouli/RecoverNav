@@ -2,7 +2,8 @@
 
 This module never infers experimental outcomes. Operator/analysis measurements
 must be supplied explicitly after the physical run and are accepted only when
-they match the retained capture provenance and pass evidence validation.
+they match retained capture provenance and pass evidence validation. Event
+identity and timing are derived from extracted ROS-bag marker evidence.
 """
 
 from __future__ import annotations
@@ -14,10 +15,8 @@ from typing import Any
 from recovernav.evidence import validate_trial_evidence
 
 _REQUIRED_MEASUREMENTS = (
-    "event_id",
     "pre_event_rho",
     "recovery_success",
-    "event_trigger_time_s",
     "data_split",
 )
 
@@ -34,6 +33,33 @@ def _read_provenance(path: Path) -> dict[str, str]:
             raise ValueError(f"invalid provenance line: {line!r}")
         values[key] = value
     return values
+
+
+def _read_event_evidence(capture: Path) -> dict[str, Any]:
+    path = capture / "event_evidence.json"
+    if not path.is_file():
+        raise ValueError("capture event_evidence.json is missing")
+    evidence = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(evidence, dict):
+        raise TypeError("event_evidence.json must contain a JSON object")
+
+    required = {
+        "event_id",
+        "event_trigger_time_s",
+        "event_topic",
+        "event_message_type",
+        "timing_reference",
+    }
+    missing = sorted(required - evidence.keys())
+    if missing:
+        raise ValueError(f"event evidence missing fields: {', '.join(missing)}")
+    if evidence["event_topic"] != "/recovernav/event_marker":
+        raise ValueError("unexpected event marker topic")
+    if evidence["event_message_type"] != "std_msgs/msg/String":
+        raise ValueError("unexpected event marker message type")
+    if evidence["timing_reference"] != "seconds_from_first_recorded_bag_message":
+        raise ValueError("unexpected event timing reference")
+    return evidence
 
 
 def build_trial_record(
@@ -58,6 +84,7 @@ def build_trial_record(
     if not provenance_path.is_file():
         raise ValueError("capture provenance.env is missing")
     provenance = _read_provenance(provenance_path)
+    event_evidence = _read_event_evidence(capture)
 
     for field in ("trial_id", "scenario_id", "platform_id", "timestamp_utc", "software_commit"):
         if field not in provenance:
@@ -69,6 +96,9 @@ def build_trial_record(
     if missing:
         raise ValueError(f"missing measured fields: {', '.join(missing)}")
 
+    if "event_id" in measurements or "event_trigger_time_s" in measurements:
+        raise ValueError("event identity/timing must come from event_evidence.json, not measurements")
+
     if measurements["data_split"] not in _ALLOWED_SPLITS:
         raise ValueError("data_split must be commissioning, validation, or held_out")
 
@@ -76,13 +106,13 @@ def build_trial_record(
         "trial_id": provenance["trial_id"],
         "timestamp_utc": provenance["timestamp_utc"],
         "scenario_id": provenance["scenario_id"],
-        "event_id": measurements["event_id"],
+        "event_id": event_evidence["event_id"],
         "platform_id": provenance["platform_id"],
         "software_commit": provenance["software_commit"],
         "config_hash": provenance["config_sha256"],
         "pre_event_rho": measurements["pre_event_rho"],
         "recovery_success": measurements["recovery_success"],
-        "event_trigger_time_s": measurements["event_trigger_time_s"],
+        "event_trigger_time_s": event_evidence["event_trigger_time_s"],
         "data_split": measurements["data_split"],
         "raw_log_ref": str(relative_capture / "bag"),
     }
