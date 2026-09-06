@@ -46,6 +46,8 @@ config_sha256=${CONFIG_HASH}
 verified_topics_sha256=${TOPICS_HASH}
 ros_distro=${ROS_DISTRO:-UNSET}
 hostname=$(hostname)
+event_marker_topic=/recovernav/event_marker
+event_marker_type=std_msgs/msg/String
 EOF
 
 cp -- "$CONFIG_FILE" "${TRIAL_DIR}/frozen_config.snapshot"
@@ -55,6 +57,7 @@ ros2 topic list -t > "${TRIAL_DIR}/ros2_topics.txt"
 
 mapfile -t TOPICS < <(grep -Ev '^[[:space:]]*(#|$)' "$TOPICS_FILE")
 [[ ${#TOPICS[@]} -gt 0 ]] || { echo "verified topics file contains no topics" >&2; exit 2; }
+TOPICS+=("/recovernav/event_marker")
 
 cat <<EOF
 Physical trial capture is armed.
@@ -64,6 +67,9 @@ platform_id: ${PLATFORM_ID}
 artifact_dir: ${TRIAL_DIR}
 
 Start the robot trial only after the safety operator confirms the physical scene.
+At the exact physical event activation, run in another terminal:
+  ${SCRIPT_DIR}/mark_event.sh <event_id>
+The event marker is recorded in the same ROS bag.
 Stop ros2 bag with Ctrl-C after the run. This script does not assign recovery_success.
 EOF
 
