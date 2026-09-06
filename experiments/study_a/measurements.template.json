@@ -1,8 +1,6 @@
 {
-  "event_id": null,
   "pre_event_rho": null,
   "recovery_success": null,
-  "event_trigger_time_s": null,
   "data_split": null,
   "pre_event_escape_capacity": null,
   "clearance_only_score": null,
