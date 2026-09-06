@@ -1,0 +1,22 @@
+name: ROS 2 Jazzy
+
+on:
+  push:
+    paths:
+      - "ros2_ws/**"
+      - ".github/workflows/ros2-jazzy-ci.yml"
+  pull_request:
+    paths:
+      - "ros2_ws/**"
+      - ".github/workflows/ros2-jazzy-ci.yml"
+
+jobs:
+  planner:
+    runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-noble-latest
+    steps:
+      - uses: ros-tooling/action-ros-ci@v0.4
+        with:
+          package-name: recovernav_planner
+          target-ros2-distro: jazzy
