@@ -1,0 +1,18 @@
+open_world:
+  obstacle: [0.0, 0.0, 0.5]
+  trigger_seconds: 12.0
+narrow_corridor:
+  obstacle: [0.0, 0.0, 0.5]
+  trigger_seconds: 12.0
+two_routes:
+  obstacle: [0.2, -0.55, 0.5]
+  trigger_seconds: 12.0
+bottleneck:
+  obstacle: [0.0, 0.0, 0.5]
+  trigger_seconds: 12.0
+dead_end:
+  obstacle: [1.2, 0.0, 0.5]
+  trigger_seconds: 12.0
+multi_corridor:
+  obstacle: [0.0, 0.0, 0.5]
+  trigger_seconds: 12.0
