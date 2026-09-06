@@ -12,6 +12,7 @@ def _capture(tmp_path: Path) -> tuple[Path, Path]:
     bag = capture / "bag"
     bag.mkdir(parents=True)
     (bag / "metadata.yaml").write_text("rosbag2_bagfile_information:\n", encoding="utf-8")
+    (bag / "bag_0.mcap").write_bytes(b"physical-bag-test-fixture")
     (capture / "CAPTURE_COMPLETE").write_text("", encoding="utf-8")
     provenance = """trial_id=trial_001
 scenario_id=scenario_a
