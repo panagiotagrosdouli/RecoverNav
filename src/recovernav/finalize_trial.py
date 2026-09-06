@@ -8,6 +8,7 @@ identity and timing are derived from extracted ROS-bag marker evidence.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -33,6 +34,28 @@ def _read_provenance(path: Path) -> dict[str, str]:
             raise ValueError(f"invalid provenance line: {line!r}")
         values[key] = value
     return values
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _verify_frozen_snapshots(capture: Path, provenance: dict[str, str]) -> None:
+    required = {
+        "config_sha256": capture / "frozen_config.snapshot",
+        "verified_topics_sha256": capture / "verified_topics.snapshot.txt",
+    }
+    for provenance_field, snapshot in required.items():
+        if provenance_field not in provenance:
+            raise ValueError(f"capture provenance missing field: {provenance_field}")
+        if not snapshot.is_file():
+            raise ValueError(f"capture snapshot is missing: {snapshot.name}")
+        if _sha256(snapshot) != provenance[provenance_field]:
+            raise ValueError(f"capture snapshot hash mismatch: {snapshot.name}")
 
 
 def _read_event_evidence(capture: Path) -> dict[str, Any]:
@@ -89,8 +112,7 @@ def build_trial_record(
     for field in ("trial_id", "scenario_id", "platform_id", "timestamp_utc", "software_commit"):
         if field not in provenance:
             raise ValueError(f"capture provenance missing field: {field}")
-    if "config_sha256" not in provenance:
-        raise ValueError("capture provenance missing field: config_sha256")
+    _verify_frozen_snapshots(capture, provenance)
 
     missing = [field for field in _REQUIRED_MEASUREMENTS if field not in measurements]
     if missing:
