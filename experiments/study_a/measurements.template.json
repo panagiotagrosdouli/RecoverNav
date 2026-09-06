@@ -1,0 +1,18 @@
+{
+  "event_id": null,
+  "pre_event_rho": null,
+  "recovery_success": null,
+  "event_trigger_time_s": null,
+  "data_split": null,
+  "pre_event_escape_capacity": null,
+  "clearance_only_score": null,
+  "estimator_runtime_ms": null,
+  "recovery_time_s": null,
+  "human_intervention": null,
+  "collision_or_contact": null,
+  "localization_failure": null,
+  "terminal_safety_stop": null,
+  "excluded": null,
+  "exclusion_reason": null,
+  "operator_notes": null
+}
