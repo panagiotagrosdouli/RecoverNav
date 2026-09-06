@@ -125,7 +125,7 @@ def finalize_trial_record(
 
     measurements = json.loads(Path(measurements_path).read_text(encoding="utf-8"))
     if not isinstance(measurements, dict):
-        raise ValueError("measurements file must contain a JSON object")
+        raise TypeError("measurements file must contain a JSON object")
 
     output = Path(output_path)
     if output.exists():
