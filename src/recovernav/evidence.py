@@ -26,6 +26,7 @@ _REQUIRED_FIELDS = (
     "event_trigger_time_s",
     "data_split",
 )
+_BAG_STORAGE_SUFFIXES = {".db3", ".mcap"}
 
 
 def _valid_iso8601_utc(value: object) -> bool:
@@ -44,12 +45,19 @@ def _valid_commit(value: object) -> bool:
     return all(character in "0123456789abcdefABCDEF" for character in value)
 
 
+def _has_nonempty_bag_storage(bag_dir: Path) -> bool:
+    return any(
+        path.is_file() and path.suffix.lower() in _BAG_STORAGE_SUFFIXES and path.stat().st_size > 0
+        for path in bag_dir.rglob("*")
+    )
+
+
 def validate_trial_evidence(record: Mapping[str, Any], artifact_root: str | Path) -> list[str]:
     """Return validation errors for one physical Study A trial artifact.
 
-    ``raw_log_ref`` must resolve beneath ``artifact_root`` and point to an
-    existing non-empty artifact. A ROS 2 bag directory is considered present
-    only when it contains ``metadata.yaml``.
+    ``raw_log_ref`` must resolve beneath ``artifact_root``. A ROS 2 bag
+    directory is admitted only when it contains non-empty ``metadata.yaml`` and
+    at least one non-empty supported storage file (SQLite ``.db3`` or MCAP).
     """
 
     errors: list[str] = []
@@ -103,6 +111,8 @@ def validate_trial_evidence(record: Mapping[str, Any], artifact_root: str | Path
         metadata = candidate / "metadata.yaml"
         if not metadata.is_file() or metadata.stat().st_size == 0:
             errors.append("raw ROS bag directory must contain non-empty metadata.yaml")
+        if not _has_nonempty_bag_storage(candidate):
+            errors.append("raw ROS bag directory must contain non-empty .db3 or .mcap storage data")
     elif candidate.stat().st_size == 0:
         errors.append("raw_log_ref points to an empty file")
 
