@@ -20,7 +20,21 @@ _REQUIRED_MEASUREMENTS = (
     "recovery_success",
     "data_split",
 )
-
+_OPTIONAL_MEASUREMENTS = (
+    "video_ref",
+    "pre_event_escape_capacity",
+    "clearance_only_score",
+    "estimator_runtime_ms",
+    "recovery_time_s",
+    "human_intervention",
+    "collision_or_contact",
+    "localization_failure",
+    "terminal_safety_stop",
+    "excluded",
+    "exclusion_reason",
+    "operator_notes",
+)
+_ALLOWED_MEASUREMENTS = set(_REQUIRED_MEASUREMENTS) | set(_OPTIONAL_MEASUREMENTS)
 _ALLOWED_SPLITS = {"commissioning", "validation", "held_out"}
 
 
@@ -114,12 +128,13 @@ def build_trial_record(
             raise ValueError(f"capture provenance missing field: {field}")
     _verify_frozen_snapshots(capture, provenance)
 
+    unknown = sorted(set(measurements) - _ALLOWED_MEASUREMENTS)
+    if unknown:
+        raise ValueError(f"unknown measurement fields: {', '.join(unknown)}")
+
     missing = [field for field in _REQUIRED_MEASUREMENTS if field not in measurements]
     if missing:
         raise ValueError(f"missing measured fields: {', '.join(missing)}")
-
-    if "event_id" in measurements or "event_trigger_time_s" in measurements:
-        raise ValueError("event identity/timing must come from event_evidence.json, not measurements")
 
     if measurements["data_split"] not in _ALLOWED_SPLITS:
         raise ValueError("data_split must be commissioning, validation, or held_out")
@@ -139,21 +154,7 @@ def build_trial_record(
         "raw_log_ref": str(relative_capture / "bag"),
     }
 
-    optional_fields = (
-        "video_ref",
-        "pre_event_escape_capacity",
-        "clearance_only_score",
-        "estimator_runtime_ms",
-        "recovery_time_s",
-        "human_intervention",
-        "collision_or_contact",
-        "localization_failure",
-        "terminal_safety_stop",
-        "excluded",
-        "exclusion_reason",
-        "operator_notes",
-    )
-    for field in optional_fields:
+    for field in _OPTIONAL_MEASUREMENTS:
         if field in measurements:
             record[field] = measurements[field]
 
