@@ -5,3 +5,7 @@ __pycache__/
 .ruff_cache/
 results/*.csv
 results/*.png
+results/ros2/
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
