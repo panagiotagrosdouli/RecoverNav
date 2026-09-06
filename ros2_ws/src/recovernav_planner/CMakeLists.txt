@@ -40,6 +40,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   ament_add_gtest(test_recoverability test/test_recoverability.cpp)
   target_include_directories(test_recoverability PRIVATE include)
+  ament_target_dependencies(test_recoverability nav2_costmap_2d)
 endif()
 
 ament_package()
