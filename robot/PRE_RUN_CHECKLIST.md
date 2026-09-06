@@ -20,31 +20,32 @@ A Study A physical commissioning trial must not start until every applicable ite
 
 ## Sensing and localization
 
-- [ ] `/scan` is live and geometrically plausible.
-- [ ] `/odom` is live.
-- [ ] TF tree is connected for the required frames.
+- [ ] Verified obstacle-sensing topic from `TOPIC_BINDINGS.md` is live and geometrically plausible.
+- [ ] Verified odometry topic from `TOPIC_BINDINGS.md` is live and changes consistently with physical motion.
+- [ ] TF tree is connected for the verified global, odometry, base, and sensor frames.
 - [ ] Map is the intended experimental map.
 - [ ] Localization is initialized and visually/quantitatively checked.
-- [ ] Unknown space handling matches the frozen estimator rule.
+- [ ] Unknown-space handling matches the frozen estimator rule.
 
 ## Navigation
 
-- [ ] Nav2 lifecycle nodes are active.
-- [ ] Global and local costmaps update from the physical sensors.
+- [ ] Nav2 lifecycle nodes are active on the discovered physical stack.
+- [ ] Verified global and local costmap streams update from physical sensing.
 - [ ] Baseline navigation can execute the route without the invalidating event.
-- [ ] Candidate route is logged before event activation.
+- [ ] Verified global-plan stream records the candidate route before event activation.
 
 ## Event apparatus
 
 - [ ] Event apparatus is physically safe and repeatable.
 - [ ] Trigger rule is planner-independent and frozen for this scenario.
 - [ ] Event is not observable by the planner before its prescribed activation.
-- [ ] Event timestamp can be recovered from logs or recorded explicitly.
+- [ ] Event timestamp can be recovered from a retained event/log source.
 
 ## Logging
 
-- [ ] `robot/record_study_a_bag.sh` starts successfully.
-- [ ] Required ROS topics are present; missing topics are resolved rather than fabricated.
+- [ ] `robot/validate_physical_stack.sh` passes with the machine-local verified topic bindings.
+- [ ] `robot/run_physical_trial.sh` starts successfully.
+- [ ] Every required topic is verified live; missing topics block the run rather than being replaced by guessed defaults.
 - [ ] Trial ID is unique.
 - [ ] Raw bag path is retained for `raw_log_ref`.
 
