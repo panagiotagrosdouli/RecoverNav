@@ -23,12 +23,14 @@ OUTPUT_ROOT="$6"
 command -v ros2 >/dev/null || { echo "ros2 not found" >&2; exit 1; }
 command -v git >/dev/null || { echo "git not found" >&2; exit 1; }
 command -v sha256sum >/dev/null || { echo "sha256sum not found" >&2; exit 1; }
+command -v python3 >/dev/null || { echo "python3 not found" >&2; exit 1; }
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 "${SCRIPT_DIR}/validate_physical_stack.sh" "$TOPICS_FILE"
 
-STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-TRIAL_DIR="${OUTPUT_ROOT}/${TRIAL_ID}_${STAMP}"
+DIR_STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+RUN_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+TRIAL_DIR="${OUTPUT_ROOT}/${TRIAL_ID}_${DIR_STAMP}"
 BAG_DIR="${TRIAL_DIR}/bag"
 mkdir -p "$TRIAL_DIR"
 
@@ -40,7 +42,7 @@ cat > "${TRIAL_DIR}/provenance.env" <<EOF
 trial_id=${TRIAL_ID}
 scenario_id=${SCENARIO_ID}
 platform_id=${PLATFORM_ID}
-timestamp_utc=${STAMP}
+timestamp_utc=${RUN_UTC}
 software_commit=${SOFTWARE_COMMIT}
 config_sha256=${CONFIG_HASH}
 verified_topics_sha256=${TOPICS_HASH}
@@ -89,7 +91,15 @@ if [[ ! -s "${BAG_DIR}/metadata.yaml" ]]; then
 fi
 
 sha256sum "${BAG_DIR}/metadata.yaml" > "${TRIAL_DIR}/bag_metadata.sha256"
+
+if ! python3 "${SCRIPT_DIR}/extract_event_marker.py" \
+  "$BAG_DIR" "${TRIAL_DIR}/event_evidence.json"; then
+  echo "event evidence extraction failed; capture retained but trial is not evidence-ready" >&2
+  exit 1
+fi
+
 touch "${TRIAL_DIR}/CAPTURE_COMPLETE"
 
 echo "Capture complete: ${TRIAL_DIR}"
+echo "Event evidence: ${TRIAL_DIR}/event_evidence.json"
 echo "Outcome remains UNASSIGNED. Finalize it only from the frozen endpoint rule and retained evidence."
