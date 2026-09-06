@@ -127,7 +127,8 @@ void RecoverNavPlanner::publish_q_grid()
 
 nav_msgs::msg::Path RecoverNavPlanner::createPlan(
   const geometry_msgs::msg::PoseStamped & start,
-  const geometry_msgs::msg::PoseStamped & goal)
+  const geometry_msgs::msg::PoseStamped & goal,
+  std::function<bool()> cancel_checker)
 {
   nav_msgs::msg::Path path;
   path.header.stamp = node_->now();
@@ -159,6 +160,10 @@ nav_msgs::msg::Path RecoverNavPlanner::createPlan(
   constexpr int dirs[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
   while (!open.empty()) {
+    if (cancel_checker && cancel_checker()) {
+      RCLCPP_INFO(node_->get_logger(), "RecoverNavPlanner: planning canceled");
+      return path;
+    }
     const auto current = open.top();
     open.pop();
     if (current.index == goal_i) {break;}
