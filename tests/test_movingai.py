@@ -44,3 +44,23 @@ def test_blocked_benchmark_endpoint_rejected(tmp_path: Path) -> None:
     scen.write_text("version 1\n0 example.map 5 4 1 1 4 3 6\n", encoding="utf-8")
     with pytest.raises(ValueError, match="blocked"):
         load_movingai_scenarios(grid, scen)
+
+
+def test_published_scenario_offset_selects_an_independent_task(tmp_path: Path) -> None:
+    grid, problems = _fixture(tmp_path)
+    problems.write_text(
+        "version 1\n"
+        "0 example.map 5 4 0 0 4 3 6.0\n"
+        "0 example.map 5 4 0 2 4 3 4.0\n",
+        encoding="utf-8",
+    )
+    selected = load_movingai_scenarios(grid, problems, limit=1, start_index=1)
+    assert len(selected) == 1
+    assert selected[0].start == (2, 0)
+    assert selected[0].seed == 1
+
+
+def test_negative_scenario_offset_rejected(tmp_path: Path) -> None:
+    grid, problems = _fixture(tmp_path)
+    with pytest.raises(ValueError, match="start_index"):
+        load_movingai_scenarios(grid, problems, start_index=-1)
