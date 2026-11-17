@@ -16,6 +16,28 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: ruff check src tests --select E9,F --ignore F401
       - run: pytest -q
+      - name: Execute deterministic paired-planner smoke benchmark
+        run: |
+          python experiments/run_experiments.py --seeds 2 --output results/ci_runs.csv
+          python experiments/analyze_results.py --input results/ci_runs.csv --output-dir results/ci
+          python - <<'PY'
+          import pandas as pd
+          runs = pd.read_csv("results/ci_runs.csv")
+          assert not runs.empty, "No experimental runs were generated"
+          assert {"baseline", "recovernav"}.issubset(set(runs["planner"])), "Missing a planner baseline"
+          assert not runs.isnull().all(axis=1).any(), "Experiment produced empty rows"
+          print(f"Validated {len(runs)} paired benchmark records")
+          PY
+      - name: Upload benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recovernav-python-benchmark
+          path: |
+            results/ci_runs.csv
+            results/ci/*.csv
+            results/ci/*.png
+          if-no-files-found: warn
 
   ros2-jazzy:
     name: ROS 2 Jazzy / Nav2 planner build and tests
