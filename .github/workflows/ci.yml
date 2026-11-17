@@ -45,11 +45,10 @@ jobs:
       - name: Build C++ Nav2 global planner
         run: |
           source /opt/ros/jazzy/setup.bash
-          colcon build \
+          colcon --log-base /tmp/recovernav_ros2/log build \
             --base-paths ros2_ws/src/recovernav_planner \
             --build-base /tmp/recovernav_ros2/build \
             --install-base /tmp/recovernav_ros2/install \
-            --log-base /tmp/recovernav_ros2/log \
             --packages-select recovernav_planner \
             --event-handlers console_direct+
 
@@ -57,10 +56,9 @@ jobs:
         run: |
           source /opt/ros/jazzy/setup.bash
           source /tmp/recovernav_ros2/install/setup.bash
-          colcon test \
+          colcon --log-base /tmp/recovernav_ros2/test-log test \
             --build-base /tmp/recovernav_ros2/build \
             --install-base /tmp/recovernav_ros2/install \
-            --log-base /tmp/recovernav_ros2/test-log \
             --packages-select recovernav_planner \
             --event-handlers console_direct+
           colcon test-result \
