@@ -94,3 +94,58 @@ jobs:
           ros2 pkg prefix recovernav_planner
           test -f /tmp/recovernav_ros2/install/recovernav_planner/share/recovernav_planner/recovernav_planner_plugin.xml
           test -f /tmp/recovernav_ros2/install/recovernav_planner/lib/librecovernav_planner.so
+
+  movingai-real-maps:
+    name: Published MovingAI static pathfinding benchmark
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install benchmark runner
+        run: |
+          python -m pip install -e ".[dev]"
+      - name: Download published room map and scenario problems
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/movingai
+          curl --fail --location --retry 3 --output /tmp/movingai/map.zip \
+            https://movingai.com/benchmarks/room/16room_000.map.zip
+          curl --fail --location --retry 3 --output /tmp/movingai/scenarios.zip \
+            https://movingai.com/benchmarks/room/16room_000.map-scen.zip
+          unzip -q /tmp/movingai/map.zip -d /tmp/movingai/maps
+          unzip -q /tmp/movingai/scenarios.zip -d /tmp/movingai/scenarios
+          find /tmp/movingai/maps -type f -name '*.map' -print
+          find /tmp/movingai/scenarios -type f -name '*.scen' -print
+      - name: Run both planners on the published map
+        run: |
+          set -euo pipefail
+          map_file="$(find /tmp/movingai/maps -type f -name '16room_000.map' -print -quit)"
+          scene_file="$(find /tmp/movingai/scenarios -type f -name '*.scen' -print -quit)"
+          test -n "$map_file"
+          test -n "$scene_file"
+          python experiments/run_experiments.py \
+            --movingai-map "$map_file" \
+            --movingai-scen "$scene_file" \
+            --max-problems 1 \
+            --output results/movingai/paired_runs.csv
+          python - <<'PY'
+          import pandas as pd
+          from pathlib import Path
+          path = Path("results/movingai/paired_runs.csv")
+          rows = pd.read_csv(path)
+          assert len(rows) == 2
+          assert set(rows["planner"]) == {"baseline", "recovernav"}
+          assert rows["scenario"].nunique() == 1
+          print(rows.to_string(index=False))
+          PY
+      - name: Retain independent benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recovernav-movingai-16room
+          path: results/movingai/paired_runs.csv
+          if-no-files-found: warn
+          retention-days: 14
