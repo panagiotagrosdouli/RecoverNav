@@ -55,6 +55,37 @@ step_cost(x) = nominal_cost(x) + lambda_recovery * (1 - Q(x))
 
 The score is intentionally interpretable and is not a safety guarantee.
 
+## Independent Moving AI Lab pathfinding benchmarks
+
+RecoverNav can now ingest published MovingAI grid maps and their associated scenario
+files without copying or modifying the upstream datasets. Download a matching
+`.map` and `.scen` file from the [Moving AI Lab 2D benchmark collection](https://movingai.com/benchmarks/grids.html)
+and run, for example:
+
+```bash
+python experiments/run_experiments.py \
+  --movingai-map /path/to/16room_000.map \
+  --movingai-scen /path/to/16room_000.scen \
+  --max-problems 5 \
+  --output results/movingai_runs.csv
+python experiments/analyze_results.py \
+  --input results/movingai_runs.csv \
+  --output-dir results/movingai
+```
+
+The map loader validates map dimensions, task endpoints and source identities.
+It refuses swamp/water tiles because their movement costs differ from the
+unit-cost planner; it never fabricates dynamic obstacles in published tasks.
+
+**Scientific scope:** MovingAI instances are independently published, *static
+grid-pathfinding benchmarks*, not real-robot recordings. Their reference lengths
+assume eight-connected octile motion, whereas RecoverNav uses four-connected
+movement. Do **not** compare the reported path lengths with the published
+optimal values or claim real-world collision safety based on this benchmark.
+These tasks measure static planning and recoverability preference, not the
+dynamic replanning mechanism. Preserve the upstream map and scenario filenames
+and cite the [Moving AI Lab benchmark](https://movingai.com/benchmarks/) in reports.
+
 ## ROS 2 simulation
 
 ### Requirements
