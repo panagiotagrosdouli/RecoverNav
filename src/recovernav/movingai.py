@@ -38,11 +38,13 @@ def load_movingai_map(path: str | Path) -> GridEnvironment:
 
 
 def load_movingai_scenarios(
-    map_path: str | Path, scen_path: str | Path, *, limit: int = 10
+    map_path: str | Path, scen_path: str | Path, *, limit: int = 10, start_index: int = 0
 ) -> list[Scenario]:
     """Load published static pathfinding tasks; do not synthesize moving obstacles."""
     if limit < 1:
         raise ValueError("limit must be at least one")
+    if start_index < 0:
+        raise ValueError("start_index must be non-negative")
     map_path = Path(map_path)
     env = load_movingai_map(map_path)
     lines = Path(scen_path).read_text(encoding="utf-8").splitlines()
@@ -51,7 +53,7 @@ def load_movingai_scenarios(
     scenarios: list[Scenario] = []
     height, width = env.shape
     for index, line in enumerate(lines[1:]):
-        if not line.strip():
+        if not line.strip() or index < start_index:
             continue
         fields = line.split()
         if len(fields) != 9:
