@@ -129,16 +129,17 @@ jobs:
           python experiments/run_experiments.py \
             --movingai-map "$map_file" \
             --movingai-scen "$scene_file" \
-            --max-problems 1 \
+            --start-problem 100 \
+            --max-problems 3 \
             --output results/movingai/paired_runs.csv
           python - <<'PY'
           import pandas as pd
           from pathlib import Path
           path = Path("results/movingai/paired_runs.csv")
           rows = pd.read_csv(path)
-          assert len(rows) == 2
+          assert len(rows) == 6
           assert set(rows["planner"]) == {"baseline", "recovernav"}
-          assert rows["scenario"].nunique() == 1
+          assert rows["scenario"].nunique() == 3
           print(rows.to_string(index=False))
           PY
       - name: Retain independent benchmark evidence
