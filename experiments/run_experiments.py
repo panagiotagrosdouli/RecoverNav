@@ -23,12 +23,13 @@ def main() -> None:
     parser.add_argument("--movingai-map", type=Path, help="Official MovingAI .map path")
     parser.add_argument("--movingai-scen", type=Path, help="Matching MovingAI .scen tasks")
     parser.add_argument("--max-problems", type=int, default=5)
+    parser.add_argument("--start-problem", type=int, default=0, help="Zero-based offset in the published MovingAI scenario list")
     args = parser.parse_args()
 
     if (args.movingai_map is None) != (args.movingai_scen is None):
         parser.error("--movingai-map and --movingai-scen must be provided together")
-    if args.seeds < 1 or args.max_problems < 1:
-        parser.error("--seeds and --max-problems must be positive")
+    if args.seeds < 1 or args.max_problems < 1 or args.start_problem < 0:
+        parser.error("--seeds and --max-problems must be positive and --start-problem non-negative")
 
     with open(args.config, encoding="utf-8") as stream:
         cfg = yaml.safe_load(stream)
@@ -40,7 +41,7 @@ def main() -> None:
         # MovingAI assumes eight-connected octile paths, while RecoverNav is four-connected.
         # Therefore never compare these path lengths with MovingAI's published optima.
         scenarios = load_movingai_scenarios(
-            args.movingai_map, args.movingai_scen, limit=args.max_problems
+            args.movingai_map, args.movingai_scen, limit=args.max_problems, start_index=args.start_problem
         )
     else:
         scenarios = [
